@@ -338,7 +338,11 @@ class AccountReader:
             # print(lastseen)  # 原始 lastseen（含标志位）
              # 0x3FFFFFFF = 1073741823，仅取低 30 位
             lastseen1 = datetime.datetime.fromtimestamp((lastseen & 1073741823) + 1375315200) 
+<<<<<<< HEAD
             print(f'最近点击telegram界面时间: {lastseen1}')  # 解码后的“最近在线”时间
+=======
+            print(f'最近操作时间: {lastseen1}')  # 解码后的时间
+>>>>>>> 190e2da (解决setting兼容性)
 
         # 将前面收集到的 4 个字节串字段转为字符串（UTF-8 或其他编码由 get_value() 自行处理）。
         info_data = [get_value(info) for info in info_data]

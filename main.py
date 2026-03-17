@@ -6,14 +6,14 @@ from decrypter import TdataReader
 if __name__ == '__main__':
     import argparse
 
-    #tdata_path = r"D:\Telegram Desktop\tdata"
+    #tdata_path = r"D:\Program Files\Telegram Desktop\tdata"
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', type=str,required=True, help='Path / directory')
     parser.add_argument('-o', type=str, help='')
     args = parser.parse_args()
 
-
     reader = TdataReader(args.i)
+    #reader = TdataReader(tdata_path)
     parsed_tdata = reader.read()
 
     if args.o is None:
