@@ -22,7 +22,7 @@ def compute_data_name_key(dataname: str):
     return file_to_to_str(filekey)
 
 def get_value(data:bytes):
-    even_index_data = bytearray()  # 使用 bytearray 以便高效追加
+    even_index_data = bytearray() 
     with io.BytesIO() as stream:
         stream.write(data)
         stream.seek(0)
@@ -122,12 +122,18 @@ def read_mtp_authorization(data: BytesIO) -> MtpData:
     mtp_data.keys_to_destroy = read_keys()
     return mtp_data
 
+
+# 如果要解密别的信息，可以模仿这里去telegram desktop的反序列化代码处跳读
+# 找到对应字段的偏移位置，然后用类似下面的方式去读出数据
+# 这里是针对设置中的代理信息字段进行的解析，其他字段可以参考 Telegram Desktop 的源代码进行类似的跳读解析
 def read_setting_authorization(data: bytes) -> Dict:
     ProxyDictType = Dict[str, Union[int, str, bytes, dict, list, proxy_setting]]
     proxy_info: ProxyDictType = {}
     try:
+        
         with io.BytesIO() as stream:
             proxy_list = []
+            #这些被跳过的对我们用处不大，如果需要可以参考 Telegram Desktop 的源代码进行解析
             stream.write(data)
             stream.seek(0)
             size = int.from_bytes(stream.read(4), 'big', signed=True)
@@ -250,9 +256,8 @@ class AccountReader:
         mtp_data.keys = read_keys()
         mtp_data.keys_to_destroy = read_keys()
         return mtp_data
-
-    def read_maps_data(self, local_key: bytes):
-        """
+    
+    """
         解析 tdata/D877F783D5D3EF8C/maps 文件，解密并提取联系人基础信息（first_name、last_name、phone、username）以及 lastseen 等字段（仅用于调试打印）。
         参数:
           local_key: 从 key_data 解出的本地密钥，用于解密 maps.tdf 中的加密负载
@@ -260,7 +265,9 @@ class AccountReader:
           [first_name, last_name, phone, username]（字符串，如遇空则为 ''）
         说明:
           本方法直接对 Telegram Desktop 使用的 Qt 序列化结构进行按字段偏移的跳读，未做完整模型化解析，注释尽量标明每一步的目的和原因。
-        """
+    """
+    def read_maps_data(self, local_key: bytes):
+        
         # print(local_key)
         info_data = []
         # maps 文件位于 data 目录下 D877F783D5D3EF8C/maps。
@@ -328,9 +335,10 @@ class AccountReader:
             # 最后读取 lastseen（uint32）。其高 2 位包含标志位，低 30 位是时间偏移，
             # 需要与 Telegram epoch（2013-08-01 00:00:00，Unix=1375315200）相加得到实际时间。
             lastseen = read_qt_uint32(stream)
-            print(lastseen)  # 原始 lastseen（含标志位）
-            lastseen1 = datetime.datetime.fromtimestamp((lastseen & 1073741823) + 1375315200)  # 0x3FFFFFFF = 1073741823，仅取低 30 位
-            print(lastseen1)  # 解码后的“最近在线”时间（仅调试展示，不参与返回）
+            # print(lastseen)  # 原始 lastseen（含标志位）
+             # 0x3FFFFFFF = 1073741823，仅取低 30 位
+            lastseen1 = datetime.datetime.fromtimestamp((lastseen & 1073741823) + 1375315200) 
+            print(f'最近在线时间: {lastseen1}')  # 解码后的“最近在线”时间
 
         # 将前面收集到的 4 个字节串字段转为字符串（UTF-8 或其他编码由 get_value() 自行处理）。
         info_data = [get_value(info) for info in info_data]
